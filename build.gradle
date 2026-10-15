@@ -1,0 +1,49 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.+'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+}
+
+dependencies {
+    // 26.x is unobfuscated — no mappings line, plain configurations
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+loom {
+    serverOnlyMinecraftJar()
+    runs {
+        server {
+            // Known Windows + JDK 25 fixes for running the dedicated server
+            jvmArguments.add("-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider")
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = 25
+}

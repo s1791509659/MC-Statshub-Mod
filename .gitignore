@@ -1,0 +1,17 @@
+# Build outputs
+build/
+.gradle/
+
+# Test server environment (local run data)
+run/
+runs/
+run_verify.log
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "statsweb",
+  "version": "${version}",
+  "name": "Stats Web",
+  "description": "Serves the Minecraft Stats Analyzer web UI with live data from your server's stats files. Players open http://<server-ip>:8080 — no client mod needed.",
+  "authors": [
+    "s1791509659"
+  ],
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.statsweb.StatswebMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": ">=26.2"
+  }
+}
