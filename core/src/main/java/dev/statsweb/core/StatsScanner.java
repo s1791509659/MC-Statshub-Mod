@@ -1,4 +1,4 @@
-package dev.statsweb;
+package dev.statsweb.core;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -32,6 +32,14 @@ public final class StatsScanner {
         public final String key;          // uuid or "name:<player>"
         public String name;               // resolved display name (may be null)
         public final Map<String, Map<String, Long>> stats = new HashMap<>(); // cat -> item -> sum
+        /** V4: advancement id -> unlock time in epoch millis (0 = unlocked, time unknown). */
+        public final Map<String, Long> adv = new LinkedHashMap<>();
+        /** V4: advancement ids that have progress but are not done yet. */
+        public final List<String> prog = new ArrayList<>();
+        /** V4: raw NBT of the playerdata file as a JSON tree (normalised by the web page). */
+        public JsonObject pdata;
+        /** V4: true when only a leftover "&lt;uuid&gt;-&lt;n&gt;.dat" was available (may be outdated). */
+        public boolean pdataStale;
         Player(String key) { this.key = key; }
     }
 
@@ -43,6 +51,15 @@ public final class StatsScanner {
         public int filesScanned;
         public int skipped;
         public int badJson;
+        // V4 counters, mirrored into the web page's import report
+        public int advFiles;
+        public int advDone;
+        public int advProgress;
+        public int recipeEntries;
+        public int advBad;
+        public int dataFiles;
+        public int dataBad;
+        public int dataStale;
     }
 
     // LinkedHashMap (java.util) keeps player ordering stable
@@ -55,10 +72,14 @@ public final class StatsScanner {
             "killed", "killed_by", "custom", "placed", "entity_killed_by");
 
     private final StatswebConfig config;
+    private final StatswebLogger log;
+    private final String version;
     private volatile Snapshot snapshot = new Snapshot();
 
-    public StatsScanner(StatswebConfig config) {
+    public StatsScanner(StatswebConfig config, StatswebLogger log, String version) {
         this.config = config;
+        this.log = log;
+        this.version = version;
     }
 
     public Snapshot snapshot() {
@@ -70,7 +91,7 @@ public final class StatsScanner {
         try {
             snapshot = scan();
         } catch (Exception e) {
-            StatswebMod.LOGGER.warn("[statsweb] scan failed, keeping previous snapshot", e);
+            log.warn("[statsweb] scan failed, keeping previous snapshot", e);
         }
     }
 
@@ -100,7 +121,7 @@ public final class StatsScanner {
                     }
                 }
             } catch (Exception e) {
-                StatswebMod.LOGGER.warn("[statsweb] failed to read {}", uc, e);
+                log.warn("[statsweb] failed to read {}", uc, e);
             }
         }
 
@@ -137,20 +158,199 @@ public final class StatsScanner {
                         }
                     } catch (Exception e) {
                         snap.badJson++;
-                        StatswebMod.LOGGER.debug("[statsweb] failed to parse {}", f, e);
+                        log.debug("[statsweb] failed to parse {}", f, e);
                     }
                 }
             } catch (Exception e) {
-                StatswebMod.LOGGER.warn("[statsweb] failed to walk {}", dir, e);
+                log.warn("[statsweb] failed to walk {}", dir, e);
             }
         }
 
-        // 3) resolve names for name-keyed players
+        // 3) advancement files (V4) — completion data, same layout split as stats
+        scanAdvancements(snap);
+
+        // 4) playerdata .dat files (V4) — gzipped NBT, shipped as raw JSON for the page to normalise
+        scanPlayerData(snap);
+
+        // 5) resolve names for name-keyed players
         for (Player p : snap.players.values()) {
             if (p.name == null && p.key.startsWith("name:")) p.name = p.key.substring(5);
         }
         // name → uuid map from usercache already merged above.
         return snap;
+    }
+
+    /* ------------------------------------------------------------------ V4: advancements */
+
+    private static final Pattern ADV_KEY = Pattern.compile("(?i)^[a-z0-9_][a-z0-9_.\\-]*:[^\\s]+$");
+    private static final Pattern RECIPE_ADV = Pattern.compile("(^|:)recipes?/");
+
+    private void scanAdvancements(Snapshot snap) {
+        for (Path dir : config.advDirs) {
+            if (!Files.isDirectory(dir)) continue;
+            try (Stream<Path> walk = Files.walk(dir)) {
+                List<Path> files = walk.filter(Files::isRegularFile)
+                        .filter(p -> p.getFileName().toString().toLowerCase().endsWith(".json"))
+                        .sorted()
+                        .toList();
+                for (Path f : files) {
+                    try {
+                        JsonElement el = parseLenient(Files.readString(f, StandardCharsets.UTF_8));
+                        if (el == null || !el.isJsonObject()) { snap.advBad++; continue; }
+                        JsonObject obj = el.getAsJsonObject();
+                        if (!looksLikeAdvancements(obj)) { snap.advBad++; continue; }
+
+                        String key = keyFor(null, f);
+                        Player p = snap.players.computeIfAbsent(key, Player::new);
+                        int done = 0, prog = 0;
+                        for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+                            String id = e.getKey();
+                            if (id.equals("DataVersion") || id.equals("dataVersion")) continue;
+                            if (!ADV_KEY.matcher(id).matches()) continue;
+                            if (!e.getValue().isJsonObject()) continue;
+                            JsonObject v = e.getValue().getAsJsonObject();
+                            if (!v.has("done") && !v.has("criteria")) continue;
+                            if (RECIPE_ADV.matcher(id).find()) { snap.recipeEntries++; continue; }
+                            long ms = criteriaTime(v.get("criteria"));
+                            boolean isDone = v.has("done") && v.get("done").isJsonPrimitive()
+                                    && v.get("done").getAsJsonPrimitive().isBoolean()
+                                    && v.get("done").getAsBoolean();
+                            if (isDone) {
+                                p.adv.put(id, ms);
+                                done++;
+                            } else {
+                                if (!p.prog.contains(id)) p.prog.add(id);
+                                prog++;
+                            }
+                        }
+                        snap.advFiles++;
+                        snap.advDone += done;
+                        snap.advProgress += prog;
+                    } catch (Exception e) {
+                        snap.advBad++;
+                        log.debug("[statsweb] failed to parse advancements {}", f, e);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[statsweb] failed to walk {}", dir, e);
+            }
+        }
+    }
+
+    /** Heuristic mirroring the web page: values are objects carrying done/criteria. */
+    static boolean looksLikeAdvancements(JsonObject obj) {
+        if (obj == null || obj.size() == 0) return false;
+        int n = 0, hit = 0;
+        for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+            if (e.getKey().equals("DataVersion") || e.getKey().equals("dataVersion")) continue;
+            if (!e.getValue().isJsonObject()) continue;
+            JsonObject v = e.getValue().getAsJsonObject();
+            n++;
+            if (v.has("done") || v.has("criteria")) hit++;
+            if (n >= 10) break;
+        }
+        return n > 0 && hit == n;
+    }
+
+    /** Latest criteria timestamp of an advancement (0 = unknown). */
+    private static long criteriaTime(JsonElement criteria) {
+        if (criteria == null || !criteria.isJsonObject()) return 0;
+        long best = 0;
+        for (Map.Entry<String, JsonElement> e : criteria.getAsJsonObject().entrySet()) {
+            long ms = parseMcDate(e.getValue());
+            if (ms > best) best = ms;
+        }
+        return best;
+    }
+
+    /** Parses "2024-06-14 14:24:32 +0800" (and unix seconds/millis) into epoch millis. */
+    static long parseMcDate(JsonElement e) {
+        if (e == null || !e.isJsonPrimitive()) return 0;
+        var prim = e.getAsJsonPrimitive();
+        if (prim.isNumber()) {
+            long v = prim.getAsLong();
+            if (v > 100_000_000_000L) return v;          // millis
+            if (v > 1_000_000_000L) return v * 1000L;    // seconds
+            return 0;
+        }
+        String s = prim.getAsString().trim();
+        if (s.length() < 10) return 0;
+        try {
+            String t = s.replace(' ', 'T').replaceAll("\\s+", "");
+            t = t.replaceAll("([+-]\\d{2})(\\d{2})$", "$1:$2");
+            try {
+                return java.time.OffsetDateTime.parse(t).toInstant().toEpochMilli();
+            } catch (Exception ignored) {
+                String local = t.length() > 19 ? t.substring(0, 19) : t;
+                return java.time.LocalDateTime.parse(local)
+                        .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+            }
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    /* ------------------------------------------------------------------ V4: playerdata */
+
+    /** Hard cap for a single playerdata file, protects the server from pathological files. */
+    private static final int MAX_DAT_BYTES = 32 * 1024 * 1024;
+    /** Leftover "&lt;uuid&gt;-&lt;digits&gt;.dat" files created by world upgrades. */
+    private static final Pattern STALE_DAT = Pattern.compile(
+            "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-\\d+$");
+
+    /**
+     * Keys the web page actually reads from a player profile. Everything else (recipeBook,
+     * Brain, attributes, …) is dropped to keep /api/data small.
+     */
+    private static final Set<String> PDATA_KEYS = Set.of(
+            "DataVersion", "dataVersion", "UUID", "playerGameType", "previousPlayerGameType", "gameType",
+            "Dimension", "Pos", "Rotation", "Motion", "OnGround", "PortalCooldown", "FallDistance",
+            "fall_distance", "FallFlying", "Health", "AbsorptionAmount", "foodLevel",
+            "foodSaturationLevel", "foodExhaustionLevel", "Air", "Fire", "DeathTime", "HurtTime",
+            "HurtByTimestamp", "XpLevel", "XpTotal", "XpP", "Score", "SelectedItemSlot", "seenCredits",
+            "abilities", "active_effects", "effects", "LastDeathLocation", "lastDeathLocation",
+            "respawn", "SpawnX", "SpawnY", "SpawnZ", "SpawnAngle", "SpawnDimension", "SpawnForced",
+            "Tags", "RootVehicle", "TicksFrozen", "SleepTimer", "Invulnerable", "Inventory",
+            "EnderItems", "equipment", "ticks_since_last_hurt_by_mob", "last_hurt_by_player",
+            "entered_nether_pos", "enteredNetherPosition");
+
+    private void scanPlayerData(Snapshot snap) {
+        for (Path dir : config.dataDirs) {
+            if (!Files.isDirectory(dir)) continue;
+            try (Stream<Path> walk = Files.walk(dir)) {
+                List<Path> files = walk.filter(Files::isRegularFile)
+                        .filter(p -> {
+                            String n = p.getFileName().toString().toLowerCase();
+                            return n.endsWith(".dat") && !n.endsWith(".dat_old");
+                        })
+                        .sorted()
+                        .toList();
+                for (Path f : files) {
+                    JsonObject root = Nbt.readFile(f, MAX_DAT_BYTES, log);
+                    if (root == null) { snap.dataBad++; continue; }
+                    String name = f.getFileName().toString();
+                    String stem = name.substring(0, name.length() - 4);
+                    String key = extractUuid(stem);
+                    if (key == null) key = keyFor(null, f);
+                    Player p = snap.players.computeIfAbsent(key, Player::new);
+                    boolean stale = STALE_DAT.matcher(stem).matches();
+                    if (stale && p.pdata != null) { snap.dataStale++; continue; }
+                    p.pdata = slimPdata(root);
+                    p.pdataStale = stale;
+                    snap.dataFiles++;
+                }
+            } catch (Exception e) {
+                log.warn("[statsweb] failed to walk {}", dir, e);
+            }
+        }
+    }
+
+    private static JsonObject slimPdata(JsonObject root) {
+        JsonObject out = new JsonObject();
+        for (Map.Entry<String, JsonElement> e : root.entrySet()) {
+            if (PDATA_KEYS.contains(e.getKey())) out.add(e.getKey(), e.getValue());
+        }
+        return out;
     }
 
     /** Player key: dashed/bare UUID from file name, else JSON uuid field, else "name:&lt;stem&gt;". */
@@ -282,14 +482,14 @@ public final class StatsScanner {
         String s = content;
         if (s.startsWith("\uFEFF")) s = s.substring(1); // strip BOM
         s = s.trim();
-        return StatswebMod.GSON.fromJson(s, JsonElement.class);
+        return Json.GSON.fromJson(s, JsonElement.class);
     }
 
     /** Builds the /api/data JSON document from the current snapshot. */
     public JsonObject toJson(Snapshot snap) {
         JsonObject root = new JsonObject();
-        root.addProperty("mod", StatswebMod.MOD_ID);
-        root.addProperty("version", StatswebMod.VERSION);
+        root.addProperty("mod", StatswebCore.MOD_ID);
+        root.addProperty("version", version);
         root.addProperty("generatedAt", snap.generatedAt);
         root.addProperty("filesScanned", snap.filesScanned);
         root.addProperty("skipped", snap.skipped);
@@ -309,9 +509,38 @@ public final class StatsScanner {
                 cats.add(c.getKey(), items);
             }
             po.add("stats", cats);
+            // V4: advancements (id -> unlock time in epoch millis) and in-progress ids
+            if (!p.adv.isEmpty()) {
+                JsonObject ao = new JsonObject();
+                for (Map.Entry<String, Long> a : p.adv.entrySet()) ao.addProperty(a.getKey(), a.getValue());
+                po.add("adv", ao);
+            }
+            if (!p.prog.isEmpty()) {
+                JsonArray pa = new JsonArray();
+                for (String k : p.prog) pa.add(k);
+                po.add("prog", pa);
+            }
+            // V4: raw NBT of the player profile (the page normalises it with the same code path
+            // used for locally imported .dat files).
+            if (p.pdata != null) po.add("pdata", p.pdata);
             players.add(po);
         }
         root.add("players", players);
+
+        // V4: scan counters, surfaced in the page's import report
+        JsonObject counts = new JsonObject();
+        counts.addProperty("files", snap.filesScanned);
+        counts.addProperty("statsFiles", snap.filesScanned - snap.skipped - snap.badJson);
+        counts.addProperty("skipped", snap.skipped);
+        counts.addProperty("badJson", snap.badJson);
+        counts.addProperty("advFiles", snap.advFiles);
+        counts.addProperty("advDone", snap.advDone);
+        counts.addProperty("advProgress", snap.advProgress);
+        counts.addProperty("recipeEntries", snap.recipeEntries);
+        counts.addProperty("dataFiles", snap.dataFiles);
+        counts.addProperty("dataBad", snap.dataBad);
+        counts.addProperty("dataStale", snap.dataStale);
+        root.add("counts", counts);
 
         JsonArray uc = new JsonArray();
         for (String[] u : snap.usercache) {

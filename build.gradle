@@ -1,49 +1,35 @@
-plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17.+'
+// Stats Web — multi-platform build
+//
+//   core   — platform-independent engine (stats / advancements / playerdata scanning,
+//            embedded HTTP server, web assets). Uses no game classes.
+//   fabric — Fabric shell; produces the single self-contained mod jar.
+//
+// The Fabric artifact deliberately does NOT use the Loom plugin. The core compiles
+// against zero Minecraft classes, so plain compile-only API dependencies suffice and
+// the resulting jar loads on any Minecraft version with a compatible loader.
+
+allprojects {
+    group = project.maven_group
+    version = project.mod_version
 }
 
-version = project.mod_version
-group = project.maven_group
+subprojects {
+    apply plugin: 'java'
 
-base {
-    archivesName = project.archives_base_name
-}
-
-repositories {
-}
-
-dependencies {
-    // 26.x is unobfuscated — no mappings line, plain configurations
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-}
-
-loom {
-    serverOnlyMinecraftJar()
-    runs {
-        server {
-            // Known Windows + JDK 25 fixes for running the dedicated server
-            jvmArguments.add("-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.WindowsSelectorProvider")
-        }
+    repositories {
+        mavenCentral()
     }
-}
 
-processResources {
-    inputs.property "version", project.version
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    java {
+        // Bytecode target: Java 17, the lowest runtime shared by every supported
+        // Minecraft version and mod loader. No toolchain is requested — the Gradle
+        // JVM compiles with --release 17, which keeps the worker stable on this machine.
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-}
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 17
     }
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = "UTF-8"
-    options.release = 25
 }

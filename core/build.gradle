@@ -1,0 +1,16 @@
+// Platform-independent engine.
+//
+// gson and slf4j are provided by the host platform (Minecraft and Paper/Spigot both
+// bundle them), so they stay compile-only and are never packed into any jar.
+
+dependencies {
+    compileOnly "com.google.code.gson:gson:${gson_version}"
+    compileOnly "org.slf4j:slf4j-api:${slf4j_version}"
+}
+
+// The core is never released on its own — each platform jar packs its classes and its
+// web assets straight in (see fabric/build.gradle). The jar task stays enabled because
+// sibling modules consume it as a compile classpath.
+base {
+    archivesName = 'statsweb-core'
+}

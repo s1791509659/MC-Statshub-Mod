@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "statsweb",
+  "version": "${version}",
+  "name": "Minecraft Player Analyzer (Stats Web)",
+  "description": "Turns your server into a live player-stats website: players open http://<server-ip>:8080 in any browser to browse stats, advancements, player profiles, ranking, comparison tables and shareable achievement cards. Server-side only, no client mod, no file upload — and since it uses no Minecraft classes it runs on any version with a modern loader.",
+  "authors": [
+    "s1791509659"
+  ],
+  "contact": {
+    "homepage": "https://github.com/s1791509659/statsweb",
+    "sources": "https://github.com/s1791509659/statsweb"
+  },
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.statsweb.fabric.StatswebFabricMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "minecraft": ">=1.18.2"
+  }
+}

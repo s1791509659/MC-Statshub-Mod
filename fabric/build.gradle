@@ -1,0 +1,42 @@
+// Fabric shell — produces the single self-contained mod jar.
+//
+// No Loom: we never reference a Minecraft class, so the Fabric Loader API is all we
+// compile against (compile-only, provided by the loader at runtime).
+
+repositories {
+    // The Fabric Loader API lives on Fabric's own Maven; everything else is on Central.
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    compileOnly "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    compileOnly "org.slf4j:slf4j-api:${slf4j_version}"
+    compileOnly "com.google.code.gson:gson:${gson_version}"
+}
+
+base {
+    archivesName = project.archives_base_name
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
+}
+
+// One jar = Fabric entrypoint + core classes + web assets + fabric.mod.json
+jar {
+    from project(':core').sourceSets.main.output
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+                'Implementation-Title': 'Stats Web',
+                'Implementation-Version': project.version
+        )
+    }
+}

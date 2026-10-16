@@ -1,4 +1,4 @@
-package dev.statsweb;
+package dev.statsweb.core;
 
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
@@ -15,19 +15,24 @@ import java.util.concurrent.Executors;
  * Minimal embedded HTTP server (JDK built-in, zero third-party dependencies).
  *
  * Routes:
- *   GET /              → Chinese analyzer page (jar resource /web/index.html)
- *   GET /en, /en/      → English analyzer page (jar resource /web/en/index.html)
- *   GET /api/version   → {"mod":"statsweb", ...} so pages can detect server mode
- *   GET /api/data      → full stats snapshot JSON
+ *   GET /                 → Chinese analyzer page (jar resource /web/index.html)
+ *   GET /en, /en/         → English analyzer page (jar resource /web/en/index.html)
+ *   GET /translations.json→ bundled Chinese item-name dictionary used by the Chinese page
+ *   GET /api/version      → {"mod":"statsweb", ...} so pages can detect server mode
+ *   GET /api/data         → full snapshot JSON (stats + advancements + player profiles)
  */
 public final class ApiServer {
     private final StatswebConfig config;
     private final StatsScanner scanner;
+    private final StatswebLogger log;
+    private final String version;
     private HttpServer server;
 
-    public ApiServer(StatswebConfig config, StatsScanner scanner) {
+    public ApiServer(StatswebConfig config, StatsScanner scanner, StatswebLogger log, String version) {
         this.config = config;
         this.scanner = scanner;
+        this.log = log;
+        this.version = version;
     }
 
     public void start() throws IOException {
@@ -39,11 +44,12 @@ public final class ApiServer {
         }));
 
         server.createContext("/", this::handlePage);
+        server.createContext("/translations.json", ex -> safe(ex, this::handleTranslations));
         server.createContext("/api/data", ex -> safe(ex, this::handleData));
         server.createContext("/api/version", ex -> safe(ex, ex2 -> {
             JsonObject o = new JsonObject();
-            o.addProperty("mod", StatswebMod.MOD_ID);
-            o.addProperty("version", StatswebMod.VERSION);
+            o.addProperty("mod", StatswebCore.MOD_ID);
+            o.addProperty("version", version);
             o.addProperty("generatedAt", scanner.snapshot().generatedAt);
             sendJson(ex2, 200, o.toString());
         }));
@@ -51,11 +57,19 @@ public final class ApiServer {
         server.start();
     }
 
+    /** Stops the embedded HTTP server (called by the platform shell on shutdown). */
+    public void stop() {
+        if (server != null) {
+            server.stop(0);
+            server = null;
+        }
+    }
+
     private void safe(HttpExchange ex, ThrowingConsumer<HttpExchange> handler) throws IOException {
         try {
             handler.accept(ex);
         } catch (Exception e) {
-            StatswebMod.LOGGER.error("[statsweb] error handling {}", ex.getRequestURI(), e);
+            log.error("[statsweb] error handling {}", ex.getRequestURI(), e);
             try {
                 send(ex, 500, "text/plain; charset=utf-8", "internal error");
             } catch (Exception ignored) {
@@ -89,9 +103,27 @@ public final class ApiServer {
             ex.getResponseHeaders().set("Cache-Control", "no-cache");
             send(ex, 200, body);
         } catch (Exception e) {
-            StatswebMod.LOGGER.error("[statsweb] page error", e);
+            log.error("[statsweb] page error", e);
             send(ex, 500, "text/plain; charset=utf-8", "internal error");
         }
+    }
+
+    /**
+     * Serves the bundled Chinese item-name dictionary. The Chinese page already embeds a
+     * copy as {@code ITEM_NAMES_ZH}, so this route is a refresh channel rather than a
+     * hard requirement — but keeping it means an operator can drop a newer
+     * {@code translations.json} behaviour-free by simply shipping a new jar.
+     */
+    private void handleTranslations(HttpExchange ex) throws IOException {
+        byte[] body = readResource("/web/translations.json");
+        if (body == null) {
+            send(ex, 404, "text/plain; charset=utf-8", "translations.json missing from jar");
+            return;
+        }
+        ex.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        ex.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        ex.getResponseHeaders().set("Cache-Control", "no-cache");
+        send(ex, 200, body);
     }
 
     private void handleData(HttpExchange ex) throws IOException {
