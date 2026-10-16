@@ -1,15 +1,15 @@
-# Stats Web — Minecraft Player Analyzer（服务端模组）
+# MC-Statshub（服务端模组 / Server Mod）
 
-把「Minecraft Player Analyzer」网页做成服务端模组：服务器装上它，玩家用手机/电脑浏览器打开
+把 **StatsHub** 统计网页做成服务端模组：服务器装上它，玩家用手机/电脑浏览器打开
 `http://服务器IP:8080` 即可查看全服玩家数据（中文 `/`、英文 `/en`），**无需安装任何客户端模组、无需上传任何文件**。
 
 **[简体中文](#简体中文) | [English](#english)**
 
-- 当前版本：**v2.0.1**（Fabric 模组 + Paper/Spigot 插件，实测 Minecraft 26.2）
+- 当前版本：**v2.0.2**（Fabric 模组 + Paper/Spigot 插件，实测 Minecraft 26.2）
 - **完全不调用 Minecraft 内部类**，只依赖平台 API（Fabric Loader / Bukkit）→ 同一份 jar 可跨游戏版本使用
 - **一个 jar 打通新旧世界布局**：自动识别 `players/stats`（MC 26.1+）与 `stats`（1.18–1.21）等两代目录结构
 - 零第三方依赖：HTTP 服务用 JDK 自带的 `com.sun.net.httpserver`，gson / slf4j 由游戏本体提供
-- 相关仓库：[mc-stats-parser](https://github.com/s1791509659/mc-stats-parser)（离线 zip 分析网页版）
+- 相关仓库：[MC-Statshub](https://github.com/s1791509659/MC-Statshub)（离线 zip 分析网页版 / GitHub Pages）
 
 ---
 
@@ -28,9 +28,9 @@
 
 ### 部署（服务器管理员）
 
-1. 从 [Releases](https://github.com/s1791509659/statsweb/releases) 下载对应平台的包：
-   - **Fabric**：`statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar` → 放进服务器的 `mods/` 文件夹
-   - **Paper / Spigot**：`statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar` → 放进服务器的 `plugins/` 文件夹
+1. 从 [Releases](https://github.com/s1791509659/MC-Statshub-Mod/releases) 下载对应平台的包：
+   - **Fabric**：`MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar` → 放进服务器的 `mods/` 文件夹
+   - **Paper / Spigot**：`MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar` → 放进服务器的 `plugins/` 文件夹
 2. 启动服务器
 3. 首次启动会生成默认配置（Fabric：`config/statsweb.json`；Paper/Spigot：`plugins/StatsWeb/statsweb.json`，格式相同）：
 
@@ -79,8 +79,8 @@
 ```bash
 ./gradlew :fabric:build :paper:build
 # 产物 / artifacts:
-#   fabric/build/libs/statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar
-#   paper/build/libs/statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar
+#   fabric/build/libs/MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - 需要 **JDK 17+**（只编译，不需要装 Minecraft）
@@ -103,15 +103,15 @@
 <a id="english"></a>
 ## English
 
-Turn the "Minecraft Player Analyzer" page into a **server-side** mod: install it on your server
+Turn the **StatsHub** web page into a **server-side** mod: install it on your server
 and every player can open `http://server-ip:8080` in a phone/PC browser to explore live, server-wide
 player data (Chinese at `/`, English at `/en`) — **no client mod, no file uploads**.
 
-- Version: **v2.0.1** (Fabric mod + Paper/Spigot plugin, verified on Minecraft 26.2)
+- Version: **v2.0.2** (Fabric mod + Paper/Spigot plugin, verified on Minecraft 26.2)
 - **Zero Minecraft classes** — only platform APIs (Fabric Loader / Bukkit), so one jar spans game versions
 - **One jar, both world layouts**: auto-detects `players/stats` (MC 26.1+) and `stats` (1.18–1.21)
 - Zero third-party dependencies: HTTP via JDK's `com.sun.net.httpserver`; gson / slf4j come from the game
-- Related repo: [mc-stats-parser](https://github.com/s1791509659/mc-stats-parser) (the offline zip-based analyzer page)
+- Related repo: [MC-Statshub](https://github.com/s1791509659/MC-Statshub) (the offline zip-based analyzer page / GitHub Pages)
 
 ### Features
 
@@ -125,9 +125,9 @@ player data (Chinese at `/`, English at `/en`) — **no client mod, no file uplo
 
 ### Deployment (server admins)
 
-1. Grab the package for your platform from [Releases](https://github.com/s1791509659/statsweb/releases):
-   - **Fabric**: `statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar` → drop it into the server's `mods/` folder
-   - **Paper / Spigot**: `statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar` → drop it into the server's `plugins/` folder
+1. Grab the package for your platform from [Releases](https://github.com/s1791509659/MC-Statshub-Mod/releases):
+   - **Fabric**: `MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar` → drop it into the server's `mods/` folder
+   - **Paper / Spigot**: `MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar` → drop it into the server's `plugins/` folder
 2. Start the server
 3. On first launch a default config is created (Fabric: `config/statsweb.json`; Paper/Spigot: `plugins/StatsWeb/statsweb.json`, same format):
 
@@ -176,8 +176,8 @@ Every candidate directory is probed on startup; the startup log prints `(found)`
 ```bash
 ./gradlew :fabric:build :paper:build
 # artifacts:
-#   fabric/build/libs/statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar
-#   paper/build/libs/statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar
+#   fabric/build/libs/MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - Requires **JDK 17+** (compiles only — no Minecraft installation needed)
@@ -225,3 +225,12 @@ v2.0.1 验证 / v2.0.1 verified:
 - 图标加载修复：所有图标改为内联 `src`，动态渲染的图标（悬浮窗、懒重绘）不再空白；补 `crossbow → crossbow_standby`、`shield → entity/shield_base`、`scaffolding → scaffolding_top` 别名；追加 1.21.4 贴图镜像兜底 1.21.4+ 新物品（苍白橡木 / 树脂 / 嘎枝之心）
   / icon loading fix: every icon now carries an inline `src`, so dynamically rendered icons (popovers, lazy redraws) are no longer blank; added aliases for crossbow / shield / scaffolding; added 1.21.4 texture mirrors as a fallback for 1.21.4+ items (pale oak / resin / creaking heart)
 - 711 玩家存档新/旧布局 `/api/data` 仍**逐字节一致**（2,915,021 字节） / both layouts still produce byte-for-byte identical `/api/data` output (2,915,021 bytes)
+
+v2.0.2 验证 / v2.0.2 verified:
+
+- 修复潜影盒悬浮窗空格子被拉成长条：空槽占位类 `empty` 与页面"空状态"占位样式撞名（`padding:70px 24px`），改为专属类 `v4-empty`
+  / fixed shulker-popover empty slots stretching into tall bars: the placeholder class `empty` collided with the page's empty-state styling; renamed to a dedicated `v4-empty` class
+- 真实浏览器（Edge 无头渲染 711 玩家存档）确认 27 格全部为 34×34 方格 + 用户人工复核
+  / confirmed in a real browser (headless Edge render of the 711-player archive) that all 27 cells are 34×34 squares + manually re-checked
+- 项目更名为 **MC-Statshub**（原 statsweb / mc-stats-parser），jar 产物名与品牌同步
+  / project renamed to **MC-Statshub** (formerly statsweb / mc-stats-parser); jar artifact names and branding follow
