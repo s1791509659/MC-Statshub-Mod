@@ -107,12 +107,14 @@ public final class StatswebConfig {
         //   * MC 26.1+         : <world>/players/stats, <world>/players/advancements, <world>/players/data
         // The lookup deliberately ignores case (Linux servers may use "Stats"/"Advancements").
         Path playersRoot = findDir(world, "players");
-        for (Path root : List.of(playersRoot, world)) {
-            addUnique(statsDirs, seen, findDir(root, "stats"));
-            addUnique(advDirs, seen, findDir(root, "advancements"));
-            addUnique(dataDirs, seen, findDir(root, "data"));
-            addUnique(dataDirs, seen, findDir(root, "playerdata"));
-        }
+        addUnique(statsDirs, seen, findDir(playersRoot, "stats"));
+        addUnique(advDirs, seen, findDir(playersRoot, "advancements"));
+        addUnique(dataDirs, seen, findDir(playersRoot, "data"));
+        addUnique(statsDirs, seen, findDir(world, "stats"));
+        addUnique(advDirs, seen, findDir(world, "advancements"));
+        addUnique(dataDirs, seen, findDir(world, "playerdata"));
+        // NB: <world>/data is deliberately NOT a candidate — that is the *world* data folder
+        // (scoreboard.dat, world_clocks.dat, map_*.dat, raids.dat …) and never holds players.
         // Last resort: a wrong level-name, or data sitting at the server root.
         addUnique(statsDirs, seen, findDir(gameDir, "stats"));
         addUnique(advDirs, seen, findDir(gameDir, "advancements"));

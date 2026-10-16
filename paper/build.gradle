@@ -1,0 +1,53 @@
+// Paper / Spigot shell — produces the plugin jar.
+//
+// The shell only uses the JavaPlugin life cycle and java.util.logging, both present on
+// every Bukkit platform, so this jar runs on Paper, Spigot, Purpur and their forks
+// unchanged. The Paper API is compile-only: it provides the base class, nothing else.
+
+repositories {
+    // Paper publishes its API (and Spigot's, repackaged) on its own Maven.
+    maven {
+        name = 'PaperMC'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    compileOnly "io.papermc.paper:paper-api:${paper_api_version}"
+    // gson ships with every Bukkit platform and is what the core serialises with.
+    compileOnly "com.google.code.gson:gson:${gson_version}"
+}
+
+base {
+    archivesName = project.archives_base_name
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'apiVersion', project.plugin_api_version
+    filesMatching('plugin.yml') {
+        expand 'version': project.version, 'apiVersion': project.plugin_api_version
+    }
+}
+
+// One jar = plugin.yml + shell classes + core classes + web assets.
+// The filename spells out platform, supported game versions and the declared Bukkit
+// api-version, so the download is self-describing:
+//   statsweb-2.0.0-paper-spigot-mc1.18.2-26.x-api1.18.jar
+jar {
+    archiveFileName = "${project.archives_base_name}-${project.version}-paper-spigot" +
+            "-mc${artifact_mc_range}-api${project.plugin_api_version}.jar"
+    from(project(':core').sourceSets.main.output) {
+        // slf4j is not guaranteed on a Bukkit classpath, so this shell logs through
+        // java.util.logging instead and the slf4j adapter is left out of the jar.
+        exclude 'dev/statsweb/core/Slf4jStatswebLogger*.class'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+                'Implementation-Title': 'Stats Web',
+                'Implementation-Version': project.version
+        )
+    }
+}

@@ -3,10 +3,11 @@
 //   core   — platform-independent engine (stats / advancements / playerdata scanning,
 //            embedded HTTP server, web assets). Uses no game classes.
 //   fabric — Fabric shell; produces the single self-contained mod jar.
+//   paper  — Paper / Spigot shell; produces the plugin jar from the same core.
 //
-// The Fabric artifact deliberately does NOT use the Loom plugin. The core compiles
-// against zero Minecraft classes, so plain compile-only API dependencies suffice and
-// the resulting jar loads on any Minecraft version with a compatible loader.
+// Neither shell uses a loader-specific toolchain: the core compiles against zero Minecraft
+// classes, so plain compile-only API dependencies suffice and the artifacts load on any
+// game version with a compatible loader / Bukkit api-version.
 
 allprojects {
     group = project.maven_group

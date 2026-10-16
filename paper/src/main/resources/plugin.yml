@@ -1,0 +1,9 @@
+name: StatsWeb
+version: '${version}'
+main: dev.statsweb.paper.StatswebPaperPlugin
+api-version: '${apiVersion}'
+description: Read-only web dashboard for player stats, advancements and inventories.
+author: s1791509659
+website: https://github.com/s1791509659/statsweb
+# The world folders are read on enable, so the world has to exist by then.
+load: POSTWORLD

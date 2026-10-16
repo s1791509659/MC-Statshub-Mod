@@ -5,8 +5,8 @@
 
 **[简体中文](#简体中文) | [English](#english)**
 
-- 当前版本：**v2.0.0**（Fabric，实测 Minecraft 26.2）
-- **完全不调用 Minecraft 内部类**，只依赖 Fabric Loader API → 同一份 jar 可跨游戏版本使用
+- 当前版本：**v2.0.1**（Fabric 模组 + Paper/Spigot 插件，实测 Minecraft 26.2）
+- **完全不调用 Minecraft 内部类**，只依赖平台 API（Fabric Loader / Bukkit）→ 同一份 jar 可跨游戏版本使用
 - **一个 jar 打通新旧世界布局**：自动识别 `players/stats`（MC 26.1+）与 `stats`（1.18–1.21）等两代目录结构
 - 零第三方依赖：HTTP 服务用 JDK 自带的 `com.sun.net.httpserver`，gson / slf4j 由游戏本体提供
 - 相关仓库：[mc-stats-parser](https://github.com/s1791509659/mc-stats-parser)（离线 zip 分析网页版）
@@ -27,9 +27,11 @@
 
 ### 部署（服务器管理员）
 
-1. 从 [Releases](https://github.com/s1791509659/statsweb/releases) 下载最新的 `statsweb-<版本>-fabric-mc<游戏版本范围>-loader<Loader最低版本>.jar`（当前即 `statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar`），放进服务器的 `mods/` 文件夹
+1. 从 [Releases](https://github.com/s1791509659/statsweb/releases) 下载对应平台的包：
+   - **Fabric**：`statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar` → 放进服务器的 `mods/` 文件夹
+   - **Paper / Spigot**：`statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar` → 放进服务器的 `plugins/` 文件夹
 2. 启动服务器
-3. 首次启动会在 `config/statsweb.json` 生成默认配置：
+3. 首次启动会生成默认配置（Fabric：`config/statsweb.json`；Paper/Spigot：`plugins/StatsWeb/statsweb.json`，格式相同）：
 
 ```json
 {
@@ -74,20 +76,24 @@
 ### 构建
 
 ```bash
-./gradlew :fabric:build        # 产物：fabric/build/libs/statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar
+./gradlew :fabric:build :paper:build
+# 产物 / artifacts:
+#   fabric/build/libs/statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - 需要 **JDK 17+**（只编译，不需要装 Minecraft）
-- 工程为 `core`（平台无关引擎）+ `fabric`（模组壳）两个模块，**不使用 Loom**
-- 平台 jar 会把 core 的类与网页资源一起打包，交付物只有一个 jar
+- 工程为 `core`（平台无关引擎）+ `fabric`（模组壳）+ `paper`（插件壳）三个模块，**不使用 Loom**
+- 平台 jar 会把 core 的类与网页资源一起打包，交付物每个平台只有一个 jar
 - Gradle wrapper 已指向腾讯镜像（services.gradle.org 在部分网络不可用）
 
 ### 平台支持
 
-| 平台 | 状态 |
-| --- | --- |
-| Fabric（MC 26.2 实测，loader ≥ 0.14 / MC ≥ 1.18.2） | ✅ v2.0.0 |
-| Paper / Spigot 插件 | 规划中 |
+| 平台 | 包 | 状态 |
+| --- | --- | --- |
+| Fabric | `mods/`（loader ≥ 0.14 / MC ≥ 1.18.2） | ✅ 实测 MC 26.2 |
+| Paper / Purpur | `plugins/`（Bukkit API ≥ 1.18） | ✅ 实测 Paper 26.2-134 |
+| Spigot | `plugins/`（Bukkit API ≥ 1.18） | ✅ 与 Paper 同一个 jar |
 
 因为核心不引用任何 Minecraft 类，同一 jar 理论上可在 1.18.2 以上的任意版本加载；26.2 是当前实测版本。
 
@@ -100,8 +106,8 @@ Turn the "Minecraft Player Analyzer" page into a **server-side** mod: install it
 and every player can open `http://server-ip:8080` in a phone/PC browser to explore live, server-wide
 player data (Chinese at `/`, English at `/en`) — **no client mod, no file uploads**.
 
-- Version: **v2.0.0** (Fabric, verified on Minecraft 26.2)
-- **Zero Minecraft classes** — only the Fabric Loader API, so one jar spans game versions
+- Version: **v2.0.1** (Fabric mod + Paper/Spigot plugin, verified on Minecraft 26.2)
+- **Zero Minecraft classes** — only platform APIs (Fabric Loader / Bukkit), so one jar spans game versions
 - **One jar, both world layouts**: auto-detects `players/stats` (MC 26.1+) and `stats` (1.18–1.21)
 - Zero third-party dependencies: HTTP via JDK's `com.sun.net.httpserver`; gson / slf4j come from the game
 - Related repo: [mc-stats-parser](https://github.com/s1791509659/mc-stats-parser) (the offline zip-based analyzer page)
@@ -117,9 +123,11 @@ player data (Chinese at `/`, English at `/en`) — **no client mod, no file uplo
 
 ### Deployment (server admins)
 
-1. Grab the latest `statsweb-<version>-fabric-mc<game range>-loader<min loader>.jar` from [Releases](https://github.com/s1791509659/statsweb/releases) — currently `statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar` — and drop it into the server's `mods/` folder
+1. Grab the package for your platform from [Releases](https://github.com/s1791509659/statsweb/releases):
+   - **Fabric**: `statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar` → drop it into the server's `mods/` folder
+   - **Paper / Spigot**: `statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar` → drop it into the server's `plugins/` folder
 2. Start the server
-3. On first launch a default `config/statsweb.json` is created:
+3. On first launch a default config is created (Fabric: `config/statsweb.json`; Paper/Spigot: `plugins/StatsWeb/statsweb.json`, same format):
 
 ```json
 {
@@ -164,20 +172,24 @@ Every candidate directory is probed on startup; the startup log prints `(found)`
 ### Building
 
 ```bash
-./gradlew :fabric:build        # artifact: fabric/build/libs/statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar
+./gradlew :fabric:build :paper:build
+# artifacts:
+#   fabric/build/libs/statsweb-2.0.1-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/statsweb-2.0.1-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - Requires **JDK 17+** (compiles only — no Minecraft installation needed)
-- Two modules: `core` (platform-independent engine) + `fabric` (mod shell), **no Loom**
-- The platform jar packs the core classes and the web assets, so the deliverable is a single jar
+- Three modules: `core` (platform-independent engine) + `fabric` (mod shell) + `paper` (plugin shell), **no Loom**
+- Each platform jar packs the core classes and the web assets, so the deliverable per platform is a single jar
 - The Gradle wrapper points to a Tencent mirror (services.gradle.org is unreachable on some networks)
 
 ### Platform support
 
-| Platform | Status |
-| --- | --- |
-| Fabric (verified on MC 26.2, loader ≥ 0.14 / MC ≥ 1.18.2) | ✅ v2.0.0 |
-| Paper / Spigot plugin | planned |
+| Platform | Package | Status |
+| --- | --- | --- |
+| Fabric | `mods/` (loader ≥ 0.14 / MC ≥ 1.18.2) | ✅ verified on MC 26.2 |
+| Paper / Purpur | `plugins/` (Bukkit API ≥ 1.18) | ✅ verified on Paper 26.2-134 |
+| Spigot | `plugins/` (Bukkit API ≥ 1.18) | ✅ same jar as Paper |
 
 Because the core references no Minecraft class, the same jar should load on any version ≥ 1.18.2; 26.2 is the tested target.
 
@@ -198,3 +210,12 @@ v2.0.0 verified against a real 711-player archive (`players.zip`, 714 files acro
 - **Legacy layout** (`world/{stats,advancements,playerdata}`): byte-for-byte identical output (2,915,021 bytes)
 - zh + en jsdom end-to-end: read-only mode entered automatically → import UI and drop veil hidden → server data bar and 16 KPIs rendered → **0 errors**
 - `/api/data` is 2.9 MB, served in 0.09–0.24 s
+
+v2.0.1 验证 / v2.0.1 verified:
+
+- 真实 **Fabric 26.2** 服务端与真实 **Paper 26.2-134** 服务端均加载成功、网页可访问
+  / loads and serves the dashboard on a real **Fabric 26.2** server and a real **Paper 26.2-134** server
+- 修复后 711 玩家存档：不再把 `<world>/data` 误判为玩家档案（幻影玩家）；损坏/空的 playerdata NBT 不再导致页面报「读取失败」
+  / after the fixes: `<world>/data` is no longer mistaken for playerdata (phantom players); corrupt/empty playerdata NBT no longer breaks the page with a load error
+- 玩家搜索补全下拉不再被卡片 `overflow` 裁剪 / the player-search autocomplete dropdown is no longer clipped by the card's `overflow`
+- 711 玩家存档新/旧布局 `/api/data` 仍**逐字节一致**（2,915,021 字节） / both layouts still produce byte-for-byte identical `/api/data` output (2,915,021 bytes)

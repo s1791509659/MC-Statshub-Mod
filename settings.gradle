@@ -16,3 +16,4 @@ plugins {
 rootProject.name = 'statsweb'
 include 'core'
 include 'fabric'
+include 'paper'

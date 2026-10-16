@@ -331,11 +331,23 @@ public final class StatsScanner {
                     String name = f.getFileName().toString();
                     String stem = name.substring(0, name.length() - 4);
                     String key = extractUuid(stem);
-                    if (key == null) key = keyFor(null, f);
+                    if (key == null) {
+                        // A world folder holds level data as .dat as well (scoreboard.dat,
+                        // world_clocks.dat, map_*.dat …) — those are not players. A real player
+                        // profile, even one exported under a player name, always carries the
+                        // player UUID inside, so a file without one is skipped.
+                        if (!hasPlayerUuid(root)) continue;
+                        key = keyFor(null, f);
+                    }
+                    // Nothing the page can use — an empty root, or a world data file that
+                    // happens to sit in a probed folder. Skipped *before* the player is
+                    // created, so it cannot turn into an empty entry either.
+                    JsonObject slim = slimPdata(root);
+                    if (slim.size() == 0) continue;
                     Player p = snap.players.computeIfAbsent(key, Player::new);
                     boolean stale = STALE_DAT.matcher(stem).matches();
                     if (stale && p.pdata != null) { snap.dataStale++; continue; }
-                    p.pdata = slimPdata(root);
+                    p.pdata = slim;
                     p.pdataStale = stale;
                     snap.dataFiles++;
                 }
@@ -343,6 +355,11 @@ public final class StatsScanner {
                 log.warn("[statsweb] failed to walk {}", dir, e);
             }
         }
+    }
+
+    /** True when an NBT root carries a player UUID — the marker of a real player profile. */
+    private static boolean hasPlayerUuid(JsonObject root) {
+        return root.has("UUID") || root.has("uuid") || root.has("PlayerUUID");
     }
 
     private static JsonObject slimPdata(JsonObject root) {
