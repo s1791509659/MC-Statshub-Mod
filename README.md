@@ -27,7 +27,7 @@
 
 ### 部署（服务器管理员）
 
-1. 从 [Releases](https://github.com/s1791509659/statsweb/releases) 下载最新的 `statsweb-x.y.z.jar`，放进服务器的 `mods/` 文件夹
+1. 从 [Releases](https://github.com/s1791509659/statsweb/releases) 下载最新的 `statsweb-<版本>-fabric-mc<游戏版本范围>-loader<Loader最低版本>.jar`（当前即 `statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar`），放进服务器的 `mods/` 文件夹
 2. 启动服务器
 3. 首次启动会在 `config/statsweb.json` 生成默认配置：
 
@@ -74,7 +74,7 @@
 ### 构建
 
 ```bash
-./gradlew :fabric:build        # 产物：fabric/build/libs/statsweb-x.y.z.jar
+./gradlew :fabric:build        # 产物：fabric/build/libs/statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar
 ```
 
 - 需要 **JDK 17+**（只编译，不需要装 Minecraft）
@@ -117,7 +117,7 @@ player data (Chinese at `/`, English at `/en`) — **no client mod, no file uplo
 
 ### Deployment (server admins)
 
-1. Grab the latest `statsweb-x.y.z.jar` from [Releases](https://github.com/s1791509659/statsweb/releases) and drop it into the server's `mods/` folder
+1. Grab the latest `statsweb-<version>-fabric-mc<game range>-loader<min loader>.jar` from [Releases](https://github.com/s1791509659/statsweb/releases) — currently `statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar` — and drop it into the server's `mods/` folder
 2. Start the server
 3. On first launch a default `config/statsweb.json` is created:
 
@@ -164,7 +164,7 @@ Every candidate directory is probed on startup; the startup log prints `(found)`
 ### Building
 
 ```bash
-./gradlew :fabric:build        # artifact: fabric/build/libs/statsweb-x.y.z.jar
+./gradlew :fabric:build        # artifact: fabric/build/libs/statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar
 ```
 
 - Requires **JDK 17+** (compiles only — no Minecraft installation needed)

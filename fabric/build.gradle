@@ -29,8 +29,13 @@ processResources {
     }
 }
 
-// One jar = Fabric entrypoint + core classes + web assets + fabric.mod.json
+// One jar = Fabric entrypoint + core classes + web assets + fabric.mod.json.
+// The filename spells out platform + supported game versions so the download on the
+// Releases page is self-describing:
+//   statsweb-2.0.0-fabric-mc1.18.2-26.x-loader0.14.jar
 jar {
+    archiveFileName = "${project.archives_base_name}-${project.version}-fabric" +
+            "-mc${artifact_mc_range}-loader${artifact_loader_min}.jar"
     from project(':core').sourceSets.main.output
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
