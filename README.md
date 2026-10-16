@@ -22,6 +22,7 @@
 - **服务器总览**：KPI、分类分布、维度分布、附魔流行度、死亡榜、纪录榜
 - **成就系统**：解锁总数/人均/最稀有、分类完成度、稀有度图、达成时间线、逐项成就明细
 - **玩家档案**：游戏模式、维度坐标、生命/饱食/氧气、经验等级、重生点、背包 36 格 + 末影箱 27 格、装备栏、附魔汇总、状态效果
+- **潜影盒预览**：鼠标悬停潜影盒（及其他带内容物的容器）时弹出 3×9 网格浮窗，按原版槽位展示内容物与堆叠数量，并显示占用格数与物品总数
 - **排行榜 / 玩家对比 / 数据表 / 趣味榜单**，以及**玩家进度时间线**与**战绩卡片导出**（PNG 分享图）
 - 全站中英双语（`/` 与 `/en`），物品中文名与图标由页面本地解析
 
@@ -118,6 +119,7 @@ player data (Chinese at `/`, English at `/en`) — **no client mod, no file uplo
 - **Server overview**: KPIs, category & dimension distribution, enchantment popularity, death and record boards
 - **Advancements**: totals / per-player / rarest, category completion, rarity chart, unlock timeline, per-advancement table
 - **Player profiles**: gamemode, dimension & coordinates, health/hunger/air, XP level, spawn point, 36-slot inventory + 27-slot ender chest, equipment, enchantment summary, status effects
+- **Shulker-box preview**: hovering a shulker box (or any container item) pops a 3x9 grid with its contents in vanilla slot order, per-stack counts, occupancy and total item count
 - **Ranking / comparison / data table / fun lists**, plus a **progress timeline** and an **exportable achievement card** (PNG share image)
 - Fully bilingual (`/` and `/en`); Chinese item names and icons are resolved client-side
 
@@ -218,4 +220,8 @@ v2.0.1 验证 / v2.0.1 verified:
 - 修复后 711 玩家存档：不再把 `<world>/data` 误判为玩家档案（幻影玩家）；损坏/空的 playerdata NBT 不再导致页面报「读取失败」
   / after the fixes: `<world>/data` is no longer mistaken for playerdata (phantom players); corrupt/empty playerdata NBT no longer breaks the page with a load error
 - 玩家搜索补全下拉不再被卡片 `overflow` 裁剪 / the player-search autocomplete dropdown is no longer clipped by the card's `overflow`
+- 新增潜影盒悬浮预览（3×9 网格、槽位对齐、堆叠数量、空槽虚线占位）；空潜影盒也显示满格空槽
+  / new shulker-box hover preview (3x9 grid, slot-faithful, per-stack counts, dashed empty slots); empty shulkers show a full grid of empty slots
+- 图标加载修复：所有图标改为内联 `src`，动态渲染的图标（悬浮窗、懒重绘）不再空白；补 `crossbow → crossbow_standby`、`shield → entity/shield_base`、`scaffolding → scaffolding_top` 别名；追加 1.21.4 贴图镜像兜底 1.21.4+ 新物品（苍白橡木 / 树脂 / 嘎枝之心）
+  / icon loading fix: every icon now carries an inline `src`, so dynamically rendered icons (popovers, lazy redraws) are no longer blank; added aliases for crossbow / shield / scaffolding; added 1.21.4 texture mirrors as a fallback for 1.21.4+ items (pale oak / resin / creaking heart)
 - 711 玩家存档新/旧布局 `/api/data` 仍**逐字节一致**（2,915,021 字节） / both layouts still produce byte-for-byte identical `/api/data` output (2,915,021 bytes)
