@@ -15,3 +15,6 @@ run_verify.log
 .settings/
 .classpath
 .project
+
+# local backup copies
+*.bak-*

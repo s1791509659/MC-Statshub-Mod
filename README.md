@@ -5,7 +5,7 @@
 
 **[简体中文](#简体中文) | [English](#english)**
 
-- 当前版本：**v2.0.2**（Fabric 模组 + Paper/Spigot 插件，实测 Minecraft 26.2）
+- 当前版本：**v2.0.3**（Fabric 模组 + Paper/Spigot 插件，实测 Minecraft 26.2）
 - **完全不调用 Minecraft 内部类**，只依赖平台 API（Fabric Loader / Bukkit）→ 同一份 jar 可跨游戏版本使用
 - **一个 jar 打通新旧世界布局**：自动识别 `players/stats`（MC 26.1+）与 `stats`（1.18–1.21）等两代目录结构
 - 零第三方依赖：HTTP 服务用 JDK 自带的 `com.sun.net.httpserver`，gson / slf4j 由游戏本体提供
@@ -29,8 +29,8 @@
 ### 部署（服务器管理员）
 
 1. 从 [Releases](https://github.com/s1791509659/MC-Statshub-Mod/releases) 下载对应平台的包：
-   - **Fabric**：`MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar` → 放进服务器的 `mods/` 文件夹
-   - **Paper / Spigot**：`MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar` → 放进服务器的 `plugins/` 文件夹
+   - **Fabric**：`MC-Statshub-2.0.3-fabric-mc1.18.2-26.x-loader0.14.jar` → 放进服务器的 `mods/` 文件夹
+   - **Paper / Spigot**：`MC-Statshub-2.0.3-paper-spigot-mc1.18.2-26.x-api1.18.jar` → 放进服务器的 `plugins/` 文件夹
 2. 启动服务器
 3. 首次启动会生成默认配置（Fabric：`config/statsweb.json`；Paper/Spigot：`plugins/StatsWeb/statsweb.json`，格式相同）：
 
@@ -79,8 +79,8 @@
 ```bash
 ./gradlew :fabric:build :paper:build
 # 产物 / artifacts:
-#   fabric/build/libs/MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar
-#   paper/build/libs/MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar
+#   fabric/build/libs/MC-Statshub-2.0.3-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/MC-Statshub-2.0.3-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - 需要 **JDK 17+**（只编译，不需要装 Minecraft）
@@ -107,7 +107,7 @@ Turn the **StatsHub** web page into a **server-side** mod: install it on your se
 and every player can open `http://server-ip:8080` in a phone/PC browser to explore live, server-wide
 player data (Chinese at `/`, English at `/en`) — **no client mod, no file uploads**.
 
-- Version: **v2.0.2** (Fabric mod + Paper/Spigot plugin, verified on Minecraft 26.2)
+- Version: **v2.0.3** (Fabric mod + Paper/Spigot plugin, verified on Minecraft 26.2)
 - **Zero Minecraft classes** — only platform APIs (Fabric Loader / Bukkit), so one jar spans game versions
 - **One jar, both world layouts**: auto-detects `players/stats` (MC 26.1+) and `stats` (1.18–1.21)
 - Zero third-party dependencies: HTTP via JDK's `com.sun.net.httpserver`; gson / slf4j come from the game
@@ -126,8 +126,8 @@ player data (Chinese at `/`, English at `/en`) — **no client mod, no file uplo
 ### Deployment (server admins)
 
 1. Grab the package for your platform from [Releases](https://github.com/s1791509659/MC-Statshub-Mod/releases):
-   - **Fabric**: `MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar` → drop it into the server's `mods/` folder
-   - **Paper / Spigot**: `MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar` → drop it into the server's `plugins/` folder
+   - **Fabric**: `MC-Statshub-2.0.3-fabric-mc1.18.2-26.x-loader0.14.jar` → drop it into the server's `mods/` folder
+   - **Paper / Spigot**: `MC-Statshub-2.0.3-paper-spigot-mc1.18.2-26.x-api1.18.jar` → drop it into the server's `plugins/` folder
 2. Start the server
 3. On first launch a default config is created (Fabric: `config/statsweb.json`; Paper/Spigot: `plugins/StatsWeb/statsweb.json`, same format):
 
@@ -176,8 +176,8 @@ Every candidate directory is probed on startup; the startup log prints `(found)`
 ```bash
 ./gradlew :fabric:build :paper:build
 # artifacts:
-#   fabric/build/libs/MC-Statshub-2.0.2-fabric-mc1.18.2-26.x-loader0.14.jar
-#   paper/build/libs/MC-Statshub-2.0.2-paper-spigot-mc1.18.2-26.x-api1.18.jar
+#   fabric/build/libs/MC-Statshub-2.0.3-fabric-mc1.18.2-26.x-loader0.14.jar
+#   paper/build/libs/MC-Statshub-2.0.3-paper-spigot-mc1.18.2-26.x-api1.18.jar
 ```
 
 - Requires **JDK 17+** (compiles only — no Minecraft installation needed)
@@ -234,3 +234,12 @@ v2.0.2 验证 / v2.0.2 verified:
   / confirmed in a real browser (headless Edge render of the 711-player archive) that all 27 cells are 34×34 squares + manually re-checked
 - 项目更名为 **MC-Statshub**（原 statsweb / mc-stats-parser），jar 产物名与品牌同步
   / project renamed to **MC-Statshub** (formerly statsweb / mc-stats-parser); jar artifact names and branding follow
+
+v2.0.3 验证 / v2.0.3 verified:
+
+- **修复排行榜「搜索任意统计项」唯一命中时不刷新**：过滤后只剩一个选项时，原生 `<select>` 把它显示为"已选中"，但对已选中值的点击不会触发 `change`，导致下方榜单永远不更新、再点也没反应；现在唯一命中即自动应用并重绘榜单
+  / **fixed the ranking metric search not refreshing on a unique match**: when filtering left a single option, the native `<select>` displayed it as already selected but clicking an already-selected value never fires `change`, so the ranking below never updated and further clicks did nothing; a unique match is now applied and the ranking redrawn automatically
+- jsdom 回归（中英双页各 8 项断言）全部通过：自动应用、榜单刷新（领奖台 + 列表）、重复触发不跳变、清空关键词恢复完整候选列表；`test_v4ext` 双页完整回归 `errors: []`
+  / jsdom regression (8 assertions per page, Chinese + English) all pass: auto-apply, ranking refresh (podium + list), stable on repeated input, full option list restored when the keyword is cleared; the full `test_v4ext` two-page regression reports `errors: []`
+- 已同步网页版：[MC-Statshub commit `b0f1068`](https://github.com/s1791509659/MC-Statshub/commit/b0f1068)
+  / mirrored to the web version: [MC-Statshub commit `b0f1068`](https://github.com/s1791509659/MC-Statshub/commit/b0f1068)
